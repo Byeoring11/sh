@@ -213,6 +213,12 @@
 
     .btn-icon i { width: 20px; height: 20px; }
 
+    .btn-icon--danger:hover,
+    .btn-icon--danger:focus-visible {
+      color: #ff453a;
+      outline-color: #ff453a;
+    }
+
     .btn-ghost {
       font-size: 12px;
       padding: 6px 10px;
@@ -867,6 +873,9 @@
                   <button type="button" class="btn-icon" data-action="copy-set" aria-label="직전 세트 복사">
                     <i data-lucide="copy"></i>
                   </button>
+                  <button type="button" class="btn-icon btn-icon--danger" data-action="delete-exercise" aria-label="종목 삭제">
+                    <i data-lucide="trash-2"></i>
+                  </button>
                 </div>
               </div>
               <div class="set-list">${setsHtml}</div>
@@ -960,6 +969,16 @@
         ex.sets.splice(setIndex, 1);
         saveStore();
         render();
+      }
+
+      function handleDeleteExercise(exId) {
+        const ex = findExercise(exId);
+        if (!ex) return;
+        if (!confirm(`「${ex.name}」 종목을 오늘 운동에서 삭제할까요?\n(지난 기록은 유지됩니다)`)) return;
+        state.exercises = state.exercises.filter((e) => e.id !== exId);
+        saveStore();
+        render();
+        showToast(`${ex.name} 종목을 삭제했습니다.`);
       }
 
       function handleToggleDone(exId, setIndex) {
@@ -1065,6 +1084,7 @@
           if (action === "add-set") return handleAddSet(exId);
           if (action === "copy-set") return handleCopySet(exId);
           if (action === "load-previous") return handleLoadPrevious(exId);
+          if (action === "delete-exercise") return handleDeleteExercise(exId);
 
           if (!row) return;
           const setIndex = parseInt(row.dataset.setIndex, 10);
