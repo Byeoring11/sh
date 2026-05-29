@@ -1,0 +1,153 @@
+# Letaracy — 번핏 스타일 운동 기록 웹앱 (Vanilla HTML)
+
+이 프로젝트는 번핏(BurnFit)의 핵심 기능 **「10초 운동 기록」(Workout Log)** 을 모방합니다.
+운동 종목·세트(중량/횟수) 기록, 세트 복사, 이전 기록 불러오기, localStorage 영속화에 집중합니다.
+루틴 추천, 식단, 1RM 그래프, 소셜, 로그인, 결제 등은 범위 밖입니다.
+
+---
+
+## 0. 기술 스택 (고정)
+
+| 구분 | 선택 |
+|------|------|
+| 마크업 | HTML5 (`main`, `section`, `button` 등 시맨틱 태그) |
+| 스타일 | CSS3 — `<style>` 블록 또는 동일 파일 내 인라인, **CSS 변수 필수** |
+| 스크립트 | **Vanilla JavaScript (ES6+)** — `<script>` 블록, 모듈 번들러 없음 |
+| 상태 저장 | `localStorage` |
+| 폰트 | Google Fonts CDN — Pretendard + DM Sans(숫자) |
+| 파일 | **`index.html` 단 1개** (CSS·JS는 같은 파일 안에 포함) |
+| 의존성 | **npm·React·Vue·Tailwind·빌드 도구 금지** (Lucide CDN만 예외, 아래 참고) |
+
+브라우저에서 `index.html`을 더블클릭해도 동작해야 한다.
+
+---
+
+## 1. Code Style
+
+### 구조·패턴
+- **React·JSX·컴포넌트 프레임워크 사용 금지.** UI는 HTML 마크업 + JS로 DOM을 갱신한다.
+- 로직은 **순수 함수**로 분리한다 (예: `saveSession`, `copyLastSet`, `loadPreviousRecord`, `calcTotalVolume`).
+- DOM 조작·이벤트 바인딩·렌더링은 역할별 함수로 나눈다 (예: `renderExerciseList`, `renderSetRow`, `bindEvents`).
+- 전역 상태는 단일 `state` 객체 + `render()` 진입점 패턴을 권장한다. 필요 시 IIFE로 스코프를 감싼다.
+- **Class 문법으로 UI를 만들지 않는다** (`class App extends ...` 금지). Plain object + function만 사용.
+
+### 아이콘
+- **기본 아이콘: [Lucide](https://lucide.dev) — CDN (`unpkg` 등)으로 로드.**
+- 마크업: `<i data-lucide="plus"></i>` 형태 후 `lucide.createIcons()` 호출.
+- DOM을 동적으로 추가한 뒤에는 해당 영역에 대해 `createIcons()`를 다시 호출한다.
+- 이모지·임의 인라인 SVG·Font Awesome 등은 Lucide에 동일 아이콘이 없을 때만 예외.
+- 아이콘만 있는 버튼: `aria-label` 필수, 터치 타겟 최소 44px.
+
+### 일반 코딩 규칙
+- 함수·변수: camelCase. 상수: `UPPER_SNAKE_CASE` 또는 파일 상단 `const`.
+- 매직 넘버·문자열은 상단 상수·CSS 변수로 분리.
+- `innerHTML`에 사용자 입력을 넣을 때는 **이스케이프**하거나 `textContent`/`createElement`를 사용한다.
+- 주석은 비즈니스 로직(이전 기록 병합, 세트 복사 등)에만 간단히.
+
+### 금지 사항
+- `lucide-react`, React, Vue, Svelte, TypeScript 빌드, Vite/Webpack, Tailwind CDN
+- 여러 HTML/JS 파일로 쪼개기 (단일 `index.html` 유지)
+
+---
+
+## 2. Design System
+
+아래 디자인 바이브는 **변경하지 않는다**. 임의로 라이트 테마·다른 브랜드 컬러로 바꾸지 않는다.
+
+### 무드
+- 다크 피트니스 앱: 집중감 있는 어두운 배경 + 에너지 있는 오렌지/레드 액센트.
+- 카피 톤: 짧고 직접적인 한국어 (예: "10초면 충분", "기록이 나를 만든다").
+- **모바일 퍼스트**: 최대 너비 430px, 세로 스크롤, 하단 고정 CTA.
+
+### 컬러 (`:root` CSS 변수로 정의·사용)
+| 토큰 | 값 | 용도 |
+|------|-----|------|
+| `--bg-primary` | `#0D0D0F` | 앱 전체 배경 |
+| `--bg-surface` | `#1A1A1E` | 카드·입력 영역 |
+| `--bg-elevated` | `#252529` | 호버·활성 세트 |
+| `--accent-main` | `#FF4D2E` ~ `#FF6B35` | CTA, 완료 강조 |
+| `--accent-secondary` | `#FFB347` | 보조 강조, 볼륨 숫자 |
+| `--text-primary` | `#F5F5F7` | 제목·본문 |
+| `--text-muted` | `#8E8E93` | 라벨·플레이스홀더 |
+| `--color-success` | `#34C759` | 세트 완료 |
+| `--border` | `#2C2C2E` | 구분선 |
+
+### 타이포그래피
+- **최우선 폰트: `Pretendard`** — 본문·UI·한국어 카피 전부.
+  - Google Fonts 또는 jsDelivr CDN. fallback: `'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`.
+- **숫자(중량·횟수·볼륨)**: `DM Sans` — `font-variant-numeric: tabular-nums`, weight 600~700.
+- 헤드라인: 20–24px / semibold.
+- 세트 숫자: 28–32px / bold.
+
+### UI 패턴
+- 카드: `border-radius: 16px`, subtle shadow, `--bg-surface`.
+- 세트 행: 좌측 세트 번호 pill → 중앙 중량|횟수 → 우측 완료 체크 (`data-lucide="check"`).
+- 액센트 버튼: pill형, full-width 하단 고정; 보조는 ghost/outline.
+- 마이크로 인터랙션: 완료 시 ~150ms scale + 색 전환; 세트 추가 시 slide-in (CSS transition).
+- **항상 다크 테마** (`prefers-color-scheme` 대응 불필요).
+
+### 레이아웃 (`index.html` 단일 페이지)
+1. Sticky 헤더: 날짜 + 오늘 요약(종목/세트 수)
+2. 운동 종목 리스트 (`#exercise-list`)
+3. 종목 추가 CTA
+4. 하단 고정: "운동 완료"
+
+---
+
+## 3. Step-by-step Execution (필수 워크플로)
+
+**기능 구현·`index.html` 수정을 시작하기 전에 반드시 다음 순서를 따른다.**
+
+1. **`plan.md` 작성** (프로젝트 루트)
+   - **`index.html` 내부 구조** (`<header>`, `<main>`, `<footer>` 등 섹션 트리)
+   - **JS 함수 목록** 및 책임 (`render*`, `handle*`, `save*` 등)
+   - **데이터 스키마** (`localStorage` 키, 세션·종목·세트 구조)
+   - **이벤트 → 상태 → DOM → 저장** 로직 흐름 (텍스트 또는 mermaid)
+   - 구현할 **기능 체크리스트** (이번 스프린트 범위만)
+2. **사용자 승인 대기** — 승인 전 **`index.html` 코딩 금지**.
+3. 승인 후 구현. 범위가 커지면 `plan.md` 갱신 후 재승인.
+
+---
+
+## 4. 핵심 기능 범위 (참고)
+
+구현 대상:
+- 오늘 날짜 세션, 종목 추가(프리셋 8종+ + 직접 입력)
+- 세트: 중량(kg), 횟수, 완료 토글, 추가/삭제/복사
+- 이전 기록 불러오기 (`lastRecords`)
+- 운동 완료 요약, 날짜별 저장, 최근 7일 도트/미니 리스트
+- ± stepper (5kg / 2.5kg / 1회 단위), 3탭 이내 입력 목표
+
+구현 제외:
+- 루틴/프로그램, 식단, 1RM 차트, 피로 히트맵, 로그인, API 연동
+
+---
+
+## 5. 데이터·품질
+
+### localStorage 스키마 (참고)
+```json
+{
+  "sessions": {
+    "YYYY-MM-DD": {
+      "exercises": [{ "id": "uuid", "name": "벤치프레스", "sets": [{ "weight": 60, "reps": 10, "done": true }] }],
+      "completedAt": null
+    }
+  },
+  "lastRecords": {
+    "벤치프레스": [{ "weight": 60, "reps": 10 }]
+  }
+}
+```
+
+### 품질
+- `viewport` meta 필수, 오프라인 동작 (운동 기록·Lucide·폰트 CDN 제외한 API 없음).
+- 접근성: `<button>` + `aria-label`, 포커스 링.
+- 모바일 375px 레이아웃 깨짐 없음.
+
+---
+
+## 6. 에이전트 응답
+
+- 사용자와의 대화는 **한국어**로 한다.
+- 커밋·PR은 사용자가 명시적으로 요청할 때만 수행한다.

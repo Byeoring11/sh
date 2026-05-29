@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Letaracy — 운동 기록</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;700&display=swap" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0d0d0f;
+      --bg-surface: #1a1a1e;
+      --bg-elevated: #252529;
+      --accent-main: #ff5722;
+      --accent-main-hover: #ff6b35;
+      --accent-secondary: #ffb347;
+      --text-primary: #f5f5f7;
+      --text-muted: #8e8e93;
+      --color-success: #34c759;
+      --border: #2c2c2e;
+      --radius: 16px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-num: "DM Sans", sans-serif;
+      --header-h: 72px;
+      --footer-h: 140px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(13, 13, 15, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+    }
+
+    .app-header__tagline {
+      font-size: 11px;
+      color: var(--accent-main);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .app-header__date {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .app-header__summary {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .app-header__summary strong {
+      color: var(--accent-secondary);
+      font-family: var(--font-num);
+      font-weight: 700;
+    }
+
+    /* Main */
+    main {
+      flex: 1;
+      padding: 16px 16px calc(var(--footer-h) + 16px);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      width: 48px;
+      height: 48px;
+      color: var(--accent-main);
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .empty-state h2 {
+      font-size: 18px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p { font-size: 14px; line-height: 1.5; }
+
+    /* Week dots */
+    .week-dots {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 0 20px;
+    }
+
+    .week-dots__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .week-dots__dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .week-dots__dot--active {
+      background: var(--accent-main);
+      border-color: var(--accent-main);
+      transform: scale(1.2);
+    }
+
+    .week-dots__dot--today {
+      box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 3px var(--accent-secondary);
+    }
+
+    .week-dots__label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Exercise card */
+    .exercise-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .exercise-card__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+    }
+
+    .exercise-card__title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .exercise-card__title i { width: 18px; height: 18px; color: var(--accent-main); }
+
+    .exercise-card__actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .btn-icon:hover, .btn-icon:focus-visible {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      outline: 2px solid var(--accent-main);
+      outline-offset: 2px;
+    }
+
+    .btn-icon i { width: 20px; height: 20px; }
+
+    .btn-ghost {
+      font-size: 12px;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: var(--font);
+      white-space: nowrap;
+    }
+
+    .btn-ghost:hover { border-color: var(--accent-main); color: var(--accent-main); }
+
+    /* Set row */
+    .set-list { padding: 8px 12px 12px; }
+
+    .set-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 1fr 44px 36px;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 4px;
+      border-radius: 12px;
+      transition: background 0.15s;
+    }
+
+    .set-row--done {
+      opacity: 0.65;
+    }
+
+    .set-row--done .set-num {
+      background: var(--color-success);
+      color: #fff;
+    }
+
+    .set-row--done .num-value {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .set-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-elevated);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-num);
+    }
+
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .stepper__label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .stepper__controls {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .stepper__btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stepper__btn:active { transform: scale(0.92); }
+
+    .num-value {
+      font-family: var(--font-num);
+      font-size: 22px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 44px;
+      text-align: center;
+      color: var(--text-primary);
+    }
+
+    .btn-check {
+      width: 44px;
+      height: 44px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .btn-check--on {
+      background: var(--color-success);
+      border-color: var(--color-success);
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .btn-check i { width: 22px; height: 22px; }
+
+    .set-row__delete {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .set-row__delete:hover { color: #ff453a; }
+
+    .exercise-card__footer {
+      display: flex;
+      gap: 8px;
+      padding: 0 12px 12px;
+    }
+
+    .btn-add-set {
+      flex: 1;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-add-set:hover { border-color: var(--accent-main); color: var(--accent-main); }
+
+    /* FAB area */
+    .fab-area {
+      position: fixed;
+      bottom: calc(var(--footer-h) - 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      padding: 0 16px;
+      z-index: 5;
+    }
+
+    .btn-add-exercise {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-radius: 14px;
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-add-exercise:hover { border-color: var(--accent-main); }
+
+    /* Footer */
+    .app-footer {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      padding: 12px 16px 24px;
+      background: linear-gradient(transparent, var(--bg-primary) 24%);
+      z-index: 10;
+    }
+
+    .btn-complete {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      background: linear-gradient(135deg, var(--accent-main), var(--accent-main-hover));
+      color: #fff;
+      border-radius: 999px;
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 87, 34, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-complete:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-complete:not(:disabled):active { transform: scale(0.98); }
+
+    /* Modal */
+    dialog {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      padding: 0;
+      max-width: calc(100vw - 32px);
+      width: 380px;
+      box-shadow: var(--shadow);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .modal__inner { padding: 20px; }
+
+    .modal__title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .preset-btn {
+      padding: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .preset-btn:hover { border-color: var(--accent-main); }
+
+    .modal__input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .modal__input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-radius: 10px;
+      font-family: var(--font);
+      font-size: 15px;
+    }
+
+    .modal__input:focus {
+      outline: 2px solid var(--accent-main);
+      border-color: transparent;
+    }
+
+    .modal__actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-secondary {
+      padding: 12px 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 10px;
+      font-family: var(--font);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      padding: 12px 20px;
+      border: none;
+      background: var(--accent-main);
+      color: #fff;
+      border-radius: 10px;
+      font-family: var(--font);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Summary */
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .summary-stat {
+      text-align: center;
+      padding: 12px;
+      background: var(--bg-elevated);
+      border-radius: 12px;
+    }
+
+    .summary-stat__value {
+      font-family: var(--font-num);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent-secondary);
+    }
+
+    .summary-stat__label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--footer-h) + 56px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s, transform 0.25s;
+      z-index: 100;
+      max-width: 90%;
+      text-align: center;
+    }
+
+    .toast--show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <p class="app-header__tagline">10초면 충분 · 기록이 나를 만든다</p>
+      <h1 class="app-header__date" id="header-date"></h1>
+      <p class="app-header__summary" id="header-summary"></p>
+    </header>
+
+    <main>
+      <section class="week-dots" id="week-dots" aria-label="최근 7일 운동 기록"></section>
+
+      <div id="empty-state" class="empty-state hidden">
+        <i data-lucide="dumbbell"></i>
+        <h2>오늘 첫 운동을 기록해 보세요</h2>
+        <p>종목을 추가하고 중량·횟수만 입력하면<br />10초 안에 운동일지가 완성됩니다.</p>
+      </div>
+
+      <div id="exercise-list"></div>
+    </main>
+
+    <div class="fab-area">
+      <button type="button" class="btn-add-exercise" id="btn-add-exercise">
+        <i data-lucide="plus"></i>
+        종목 추가
+      </button>
+    </div>
+
+    <footer class="app-footer">
+      <button type="button" class="btn-complete" id="btn-complete" disabled>
+        <i data-lucide="flag"></i>
+        운동 완료
+      </button>
+    </footer>
+  </div>
+
+  <dialog id="modal-add">
+    <div class="modal__inner">
+      <h2 class="modal__title">운동 종목 추가</h2>
+      <div class="preset-grid" id="preset-grid"></div>
+      <div class="modal__input-row">
+        <input type="text" class="modal__input" id="custom-exercise-name" placeholder="직접 입력 (예: 케이블 크로스오버)" maxlength="40" />
+        <button type="button" class="btn-primary" id="btn-custom-add">추가</button>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn-secondary" id="btn-modal-close">닫기</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="modal-summary">
+    <div class="modal__inner">
+      <h2 class="modal__title">오늘 운동 완료 🎉</h2>
+      <p style="color: var(--text-muted); font-size: 14px;">수고하셨습니다. 내일도 한 세트 더.</p>
+      <div class="summary-stats" id="summary-stats"></div>
+      <div class="modal__actions">
+        <button type="button" class="btn-primary" id="btn-summary-close">확인</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "letaracy_workout";
+      const PRESETS = [
+        "벤치프레스", "스쿼트", "데드리프트", "숄더프레스",
+        "랫풀다운", "바벨컬", "레그프레스", "풀업"
+      ];
+      const WEIGHT_STEP = 2.5;
+      const WEIGHT_STEP_FAST = 5;
+      const REPS_STEP = 1;
+
+      let store = { sessions: {}, lastRecords: {} };
+      let state = { exercises: [] };
+      let toastTimer = null;
+
+      const $ = (sel) => document.querySelector(sel);
+
+      function generateId() {
+        return "ex_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function getTodayKey() {
+        const d = new Date();
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function formatDisplayDate(key) {
+        const [y, m, d] = key.split("-").map(Number);
+        const date = new Date(y, m - 1, d);
+        const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+        return `${m}월 ${d}일 ${weekdays[date.getDay()]}요일`;
+      }
+
+      function loadStore() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) store = JSON.parse(raw);
+          if (!store.sessions) store.sessions = {};
+          if (!store.lastRecords) store.lastRecords = {};
+        } catch {
+          store = { sessions: {}, lastRecords: {} };
+        }
+      }
+
+      function saveStore() {
+        const key = getTodayKey();
+        store.sessions[key] = {
+          exercises: JSON.parse(JSON.stringify(state.exercises)),
+          completedAt: store.sessions[key]?.completedAt ?? null
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      }
+
+      function getOrCreateSession() {
+        const key = getTodayKey();
+        if (!store.sessions[key]) {
+          store.sessions[key] = { exercises: [], completedAt: null };
+        }
+        state.exercises = store.sessions[key].exercises || [];
+        if (!Array.isArray(state.exercises)) state.exercises = [];
+      }
+
+      function calcTotalVolume(exercises) {
+        return exercises.reduce((sum, ex) => {
+          return sum + ex.sets.reduce((s, set) => s + set.weight * set.reps, 0);
+        }, 0);
+      }
+
+      function countSets(exercises) {
+        return exercises.reduce((n, ex) => n + ex.sets.length, 0);
+      }
+
+      function updateLastRecords() {
+        state.exercises.forEach((ex) => {
+          if (ex.sets.length > 0) {
+            store.lastRecords[ex.name] = ex.sets.map((s) => ({
+              weight: s.weight,
+              reps: s.reps
+            }));
+          }
+        });
+      }
+
+      function defaultSet(copyFrom) {
+        if (copyFrom) {
+          return { weight: copyFrom.weight, reps: copyFrom.reps, done: false };
+        }
+        return { weight: 20, reps: 10, done: false };
+      }
+
+      function showToast(msg) {
+        const el = $("#toast");
+        el.textContent = msg;
+        el.classList.add("toast--show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("toast--show"), 2200);
+      }
+
+      function refreshIcons(root) {
+        if (typeof lucide !== "undefined") {
+          lucide.createIcons({ attrs: { "stroke-width": 2 }, nameAttr: "data-lucide" });
+        }
+      }
+
+      function renderHeader() {
+        const key = getTodayKey();
+        $("#header-date").textContent = formatDisplayDate(key);
+        const exCount = state.exercises.length;
+        const setCount = countSets(state.exercises);
+        const vol = calcTotalVolume(state.exercises);
+        $("#header-summary").innerHTML =
+          `종목 <strong>${exCount}</strong> · 세트 <strong>${setCount}</strong> · 볼륨 <strong>${vol.toLocaleString()}</strong> kg`;
+        $("#btn-complete").disabled = exCount === 0;
+      }
+
+      function renderWeekDots() {
+        const container = $("#week-dots");
+        const today = new Date();
+        const items = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const key = [
+            d.getFullYear(),
+            String(d.getMonth() + 1).padStart(2, "0"),
+            String(d.getDate()).padStart(2, "0")
+          ].join("-");
+          const session = store.sessions[key];
+          const active = session && session.exercises && session.exercises.length > 0;
+          const isToday = i === 0;
+          const label = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+          items.push(`
+            <div class="week-dots__item">
+              <div class="week-dots__dot ${active ? "week-dots__dot--active" : ""} ${isToday ? "week-dots__dot--today" : ""}" title="${key}"></div>
+              <span class="week-dots__label">${isToday ? "오늘" : label}</span>
+            </div>
+          `);
+        }
+        container.innerHTML = items.join("");
+      }
+
+      function renderSetRow(exId, set, index) {
+        const doneClass = set.done ? "set-row--done" : "";
+        const checkClass = set.done ? "btn-check--on" : "";
+        return `
+          <div class="set-row ${doneClass}" data-ex-id="${exId}" data-set-index="${index}">
+            <span class="set-num">${index + 1}</span>
+            <div class="stepper">
+              <span class="stepper__label">kg</span>
+              <div class="stepper__controls">
+                <button type="button" class="stepper__btn" data-action="weight-down" aria-label="중량 감소">−</button>
+                <span class="num-value">${set.weight}</span>
+                <button type="button" class="stepper__btn" data-action="weight-up" aria-label="중량 증가">+</button>
+              </div>
+            </div>
+            <div class="stepper">
+              <span class="stepper__label">회</span>
+              <div class="stepper__controls">
+                <button type="button" class="stepper__btn" data-action="reps-down" aria-label="횟수 감소">−</button>
+                <span class="num-value">${set.reps}</span>
+                <button type="button" class="stepper__btn" data-action="reps-up" aria-label="횟수 증가">+</button>
+              </div>
+            </div>
+            <button type="button" class="btn-check ${checkClass}" data-action="toggle-done" aria-label="세트 완료">
+              <i data-lucide="check"></i>
+            </button>
+            <button type="button" class="set-row__delete" data-action="delete-set" aria-label="세트 삭제">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        `;
+      }
+
+      function renderExerciseList() {
+        const list = $("#exercise-list");
+        const empty = $("#empty-state");
+
+        if (state.exercises.length === 0) {
+          list.innerHTML = "";
+          empty.classList.remove("hidden");
+          return;
+        }
+
+        empty.classList.add("hidden");
+        list.innerHTML = state.exercises.map((ex) => {
+          const setsHtml = ex.sets.map((s, i) => renderSetRow(ex.id, s, i)).join("");
+          const hasPrev = store.lastRecords[ex.name] && store.lastRecords[ex.name].length > 0;
+          return `
+            <article class="exercise-card" data-ex-id="${ex.id}">
+              <div class="exercise-card__head">
+                <h3 class="exercise-card__title">
+                  <i data-lucide="dumbbell"></i>
+                  ${escapeHtml(ex.name)}
+                </h3>
+                <div class="exercise-card__actions">
+                  ${hasPrev ? `<button type="button" class="btn-ghost" data-action="load-previous">지난 기록</button>` : ""}
+                  <button type="button" class="btn-icon" data-action="copy-set" aria-label="직전 세트 복사">
+                    <i data-lucide="copy"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="set-list">${setsHtml}</div>
+              <div class="exercise-card__footer">
+                <button type="button" class="btn-add-set" data-action="add-set">
+                  <i data-lucide="plus"></i> 세트 추가
+                </button>
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        refreshIcons(list);
+      }
+
+      function renderPresetGrid() {
+        $("#preset-grid").innerHTML = PRESETS.map(
+          (name) => `<button type="button" class="preset-btn" data-preset="${escapeHtml(name)}">${escapeHtml(name)}</button>`
+        ).join("");
+      }
+
+      function render() {
+        renderHeader();
+        renderWeekDots();
+        renderExerciseList();
+        refreshIcons();
+      }
+
+      function findExercise(exId) {
+        return state.exercises.find((e) => e.id === exId);
+      }
+
+      function addExercise(name) {
+        const trimmed = name.trim();
+        if (!trimmed) return;
+        if (state.exercises.some((e) => e.name === trimmed)) {
+          showToast("이미 추가된 종목입니다.");
+          return;
+        }
+        const prev = store.lastRecords[trimmed];
+        const initialSets = prev && prev.length
+          ? prev.map((s) => ({ weight: s.weight, reps: s.reps, done: false }))
+          : [defaultSet()];
+        state.exercises.push({ id: generateId(), name: trimmed, sets: initialSets });
+        saveStore();
+        render();
+        showToast(`${trimmed} 추가됨`);
+      }
+
+      function handleAddSet(exId) {
+        const ex = findExercise(exId);
+        if (!ex) return;
+        const last = ex.sets[ex.sets.length - 1];
+        ex.sets.push(defaultSet(last));
+        saveStore();
+        render();
+      }
+
+      function handleCopySet(exId) {
+        const ex = findExercise(exId);
+        if (!ex || ex.sets.length === 0) return;
+        const last = ex.sets[ex.sets.length - 1];
+        ex.sets.push(defaultSet(last));
+        saveStore();
+        render();
+        showToast("직전 세트를 복사했습니다.");
+      }
+
+      function handleLoadPrevious(exId) {
+        const ex = findExercise(exId);
+        if (!ex) return;
+        const prev = store.lastRecords[ex.name];
+        if (!prev || !prev.length) {
+          showToast("불러올 기록이 없습니다.");
+          return;
+        }
+        if (!confirm(`「${ex.name}」 지난 기록(${prev.length}세트)을 불러올까요?\n현재 세트는 대체됩니다.`)) return;
+        ex.sets = prev.map((s) => ({ weight: s.weight, reps: s.reps, done: false }));
+        saveStore();
+        render();
+        showToast("지난 기록을 불러왔습니다.");
+      }
+
+      function handleDeleteSet(exId, setIndex) {
+        const ex = findExercise(exId);
+        if (!ex) return;
+        if (ex.sets.length <= 1) {
+          showToast("최소 1세트는 유지됩니다.");
+          return;
+        }
+        ex.sets.splice(setIndex, 1);
+        saveStore();
+        render();
+      }
+
+      function handleToggleDone(exId, setIndex) {
+        const ex = findExercise(exId);
+        if (!ex || !ex.sets[setIndex]) return;
+        ex.sets[setIndex].done = !ex.sets[setIndex].done;
+        saveStore();
+        render();
+      }
+
+      function handleStepper(exId, setIndex, action, shiftKey) {
+        const ex = findExercise(exId);
+        const set = ex?.sets[setIndex];
+        if (!set) return;
+
+        if (action === "weight-up") {
+          set.weight = Math.round((set.weight + (shiftKey ? WEIGHT_STEP_FAST : WEIGHT_STEP)) * 10) / 10;
+        } else if (action === "weight-down") {
+          set.weight = Math.max(0, Math.round((set.weight - (shiftKey ? WEIGHT_STEP_FAST : WEIGHT_STEP)) * 10) / 10);
+        } else if (action === "reps-up") {
+          set.reps += REPS_STEP;
+        } else if (action === "reps-down") {
+          set.reps = Math.max(1, set.reps - REPS_STEP);
+        }
+        saveStore();
+        render();
+      }
+
+      function handleCompleteWorkout() {
+        if (state.exercises.length === 0) return;
+        updateLastRecords();
+        const key = getTodayKey();
+        store.sessions[key].completedAt = new Date().toISOString();
+        saveStore();
+
+        const exCount = state.exercises.length;
+        const setCount = countSets(state.exercises);
+        const vol = calcTotalVolume(state.exercises);
+
+        $("#summary-stats").innerHTML = `
+          <div class="summary-stat">
+            <div class="summary-stat__value">${exCount}</div>
+            <div class="summary-stat__label">종목</div>
+          </div>
+          <div class="summary-stat">
+            <div class="summary-stat__value">${setCount}</div>
+            <div class="summary-stat__label">세트</div>
+          </div>
+          <div class="summary-stat">
+            <div class="summary-stat__value">${vol.toLocaleString()}</div>
+            <div class="summary-stat__label">볼륨(kg)</div>
+          </div>
+        `;
+
+        $("#modal-summary").showModal();
+        renderWeekDots();
+        showToast("운동 완료! 기록이 저장되었습니다.");
+      }
+
+      function bindEvents() {
+        $("#btn-add-exercise").addEventListener("click", () => {
+          $("#custom-exercise-name").value = "";
+          $("#modal-add").showModal();
+          refreshIcons();
+        });
+
+        $("#btn-modal-close").addEventListener("click", () => $("#modal-add").close());
+        $("#btn-summary-close").addEventListener("click", () => $("#modal-summary").close());
+
+        $("#btn-custom-add").addEventListener("click", () => {
+          const name = $("#custom-exercise-name").value;
+          if (name.trim()) {
+            addExercise(name);
+            $("#modal-add").close();
+          }
+        });
+
+        $("#custom-exercise-name").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            $("#btn-custom-add").click();
+          }
+        });
+
+        $("#preset-grid").addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-preset]");
+          if (!btn) return;
+          addExercise(btn.dataset.preset);
+          $("#modal-add").close();
+        });
+
+        $("#btn-complete").addEventListener("click", handleCompleteWorkout);
+
+        $("#exercise-list").addEventListener("click", (e) => {
+          const card = e.target.closest(".exercise-card");
+          const row = e.target.closest(".set-row");
+          if (!card) return;
+          const exId = card.dataset.exId;
+          const btn = e.target.closest("[data-action]");
+          if (!btn) return;
+          const action = btn.dataset.action;
+
+          if (action === "add-set") return handleAddSet(exId);
+          if (action === "copy-set") return handleCopySet(exId);
+          if (action === "load-previous") return handleLoadPrevious(exId);
+
+          if (!row) return;
+          const setIndex = parseInt(row.dataset.setIndex, 10);
+
+          if (action === "delete-set") return handleDeleteSet(exId, setIndex);
+          if (action === "toggle-done") return handleToggleDone(exId, setIndex);
+          if (action.startsWith("weight-") || action.startsWith("reps-")) {
+            return handleStepper(exId, setIndex, action, e.shiftKey);
+          }
+        });
+      }
+
+      function init() {
+        loadStore();
+        getOrCreateSession();
+        renderPresetGrid();
+        bindEvents();
+        render();
+        refreshIcons();
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>
